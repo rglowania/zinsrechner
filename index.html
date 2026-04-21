@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AO-Zinsrechner</title>
+  <style>
+    :root {
+      --primary:       #1a3558;
+      --primary-hover: #24497a;
+      --accent:        #3a7bd5;
+      --success:       #1e8449;
+      --danger:        #b03a2e;
+      --warning-bg:    #fef9e7;
+      --warning-border:#f0a500;
+      --warning-text:  #7a5000;
+      --info-bg:       #eaf3fb;
+      --info-text:     #1a4a6e;
+      --bg:            #f2f5f9;
+      --card-bg:       #ffffff;
+      --border:        #ccd6e0;
+      --text:          #1c2a38;
+      --muted:         #5a6b7c;
+      --shadow:        0 2px 10px rgba(0,0,0,.09);
+      --radius:        10px;
+    }
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 15px;
+    }
+
+    /* ── Header ────────────────────────────────────────────────────── */
+    header {
+      background: var(--primary);
+      color: #fff;
+      padding: 1.4rem 2rem;
+      box-shadow: 0 2px 6px rgba(0,0,0,.25);
+    }
+    header h1 { font-size: 1.55rem; font-weight: 700; letter-spacing: -.4px; }
+    header p  { opacity: .75; margin-top: .2rem; font-size: .88rem; }
+
+    /* ── Layout ────────────────────────────────────────────────────── */
+    .container { max-width: 920px; margin: 0 auto; padding: 1.75rem 1rem; }
+
+    /* ── Tabs ──────────────────────────────────────────────────────── */
+    .tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: .45rem;
+      margin-bottom: 1.5rem;
+    }
+    .tab-btn {
+      padding: .45rem .95rem;
+      border: 2px solid var(--border);
+      border-radius: 7px;
+      background: #fff;
+      cursor: pointer;
+      font-size: .82rem;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all .14s;
+      white-space: nowrap;
+    }
+    .tab-btn:hover  { border-color: var(--accent); color: var(--accent); }
+    .tab-btn.active { background: var(--primary); border-color: var(--primary); color: #fff; }
+
+    .tab-content         { display: none; }
+    .tab-content.active  { display: block; }
+
+    /* ── Card ──────────────────────────────────────────────────────── */
+    .card {
+      background: var(--card-bg);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 1.75rem;
+    }
+    .card-title {
+      font-size: 1.08rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: .2rem;
+    }
+    .card-sub {
+      font-size: .83rem;
+      color: var(--muted);
+      margin-bottom: 1.4rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* ── Form ──────────────────────────────────────────────────────── */
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: 1rem;
+      margin-bottom: 1.2rem;
+    }
+    .form-group        { display: flex; flex-direction: column; gap: .35rem; }
+    .form-group label  { font-size: .76rem; font-weight: 700; color: var(--muted);
+                         text-transform: uppercase; letter-spacing: .4px; }
+    .form-group input,
+    .form-group select {
+      padding: .58rem .75rem;
+      border: 2px solid var(--border);
+      border-radius: 8px;
+      font-size: .95rem;
+      color: var(--text);
+      transition: border-color .14s;
+      width: 100%;
+      background: #fff;
+    }
+    .form-group input:focus,
+    .form-group select:focus { outline: none; border-color: var(--accent); }
+    .hint { font-size: .74rem; color: var(--muted); line-height: 1.4; }
+
+    /* ── Radio toggle ──────────────────────────────────────────────── */
+    .radio-group { display: flex; flex-wrap: wrap; gap: .5rem; margin-top: .15rem; }
+    .radio-opt {
+      display: flex; align-items: center; gap: .35rem;
+      padding: .45rem .8rem;
+      border: 2px solid var(--border); border-radius: 8px;
+      cursor: pointer; font-size: .85rem; font-weight: 500;
+      transition: all .14s;
+    }
+    .radio-opt:has(input:checked) { border-color: var(--primary); background: #eef3fa; }
+    .radio-opt input { accent-color: var(--primary); }
+
+    /* ── Button ────────────────────────────────────────────────────── */
+    .btn {
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      padding: .65rem 1.7rem;
+      border-radius: 8px;
+      font-size: .95rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background .14s;
+    }
+    .btn:hover { background: var(--primary-hover); }
+
+    /* ── Results ───────────────────────────────────────────────────── */
+    .result-box {
+      margin-top: 1.4rem;
+      padding: 1.2rem 1.3rem;
+      background: var(--bg);
+      border-radius: var(--radius);
+      border-left: 4px solid var(--accent);
+    }
+    .result-box.is-nz  { border-left-color: var(--danger); }
+    .result-box.is-ez  { border-left-color: var(--success); }
+    .result-main {
+      font-size: 1.7rem;
+      font-weight: 800;
+      margin-bottom: .45rem;
+    }
+    .result-main.is-nz { color: var(--danger); }
+    .result-main.is-ez { color: var(--success); }
+    .result-main.is-neutral { color: var(--primary); }
+    .result-label { font-size: .83rem; color: var(--muted); margin-bottom: .8rem; }
+
+    .detail-table { width: 100%; border-collapse: collapse; font-size: .85rem; margin-top: .6rem; }
+    .detail-table th {
+      text-align: left; padding: .38rem .5rem;
+      background: rgba(0,0,0,.04);
+      font-size: .75rem; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .3px;
+    }
+    .detail-table td { padding: .38rem .5rem; border-top: 1px solid var(--border); }
+    .detail-table .r { text-align: right; }
+    .detail-table tfoot td { font-weight: 700; border-top: 2px solid var(--border); }
+
+    /* ── Info / Alert ──────────────────────────────────────────────── */
+    .info-box {
+      margin-top: 1rem;
+      padding: .75rem 1rem;
+      background: var(--info-bg);
+      border-radius: 8px;
+      font-size: .8rem;
+      color: var(--info-text);
+      line-height: 1.55;
+    }
+    .info-box strong { font-weight: 700; }
+
+    .alert {
+      padding: .7rem 1rem;
+      border-radius: 8px;
+      font-size: .875rem;
+      margin-top: .8rem;
+    }
+    .alert-warn {
+      background: var(--warning-bg);
+      border: 1px solid var(--warning-border);
+      color: var(--warning-text);
+    }
+
+    /* ── Responsive ────────────────────────────────────────────────── */
+    @media (max-width: 580px) {
+      .form-grid { grid-template-columns: 1fr; }
+      .tab-btn   { font-size: .76rem; padding: .38rem .7rem; }
+      header h1  { font-size: 1.3rem; }
+      .result-main { font-size: 1.4rem; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>AO-Zinsrechner</h1>
+  <p>Zinsen, Verspätungszuschläge und Säumniszuschläge nach der Abgabenordnung</p>
+</header>
+
+<div class="container">
+  <div class="tabs" id="tabbar"></div>
+
+  <!-- ═══ §233a ═══════════════════════════════════════════════════════ -->
+  <div id="tab-s233a" class="tab-content">
+    <div class="card">
+      <div class="card-title">§ 233a AO – Nachzahlungs- und Erstattungszinsen</div>
+      <div class="card-sub">Zinsen auf die Differenz zwischen festgesetzter Steuer und geleisteten Vorauszahlungen</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Unterschiedsbetrag (€)</label>
+          <input type="number" id="s233a-betrag" placeholder="z. B. 5000" step="0.01">
+          <span class="hint">+ Nachzahlung / − Erstattung</span>
+        </div>
+        <div class="form-group">
+          <label>Veranlagungszeitraum</label>
+          <select id="s233a-vz" onchange="s233aKarenz()">
+            <option value="">– manuell –</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Zinsbeginn</label>
+          <input type="date" id="s233a-beginn">
+          <span class="hint" id="s233a-karenz-hint">Aus VZ berechnet oder manuell</span>
+        </div>
+        <div class="form-group">
+          <label>Zinsende</label>
+          <input type="date" id="s233a-ende">
+          <span class="hint">Tag der Zahlung / Fälligkeit</span>
+        </div>
+      </div>
+      <button class="btn" onclick="calc233a()">Berechnen</button>
+      <div id="s233a-result"></div>
+      <div class="info-box">
+        <strong>Karenzzeit:</strong> Der Zinslauf beginnt 15 Monate nach Ablauf des Veranlagungszeitraums – bei Kalenderjahr am 1. April des übernächsten Jahres (§ 233a Abs. 2 AO).
+        Bemessungsgrundlage ist der <em>Unterschiedsbetrag</em> (festgesetzte Steuer abzgl. angerechnete Vorauszahlungen und Steuerabzugsbeträge).
+        Zinssatz: 0,50 %/Monat bis 31.12.2018 · 0,15 %/Monat ab 01.01.2019 (§ 238 Abs. 1a AO).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ §234 ═══════════════════════════════════════════════════════ -->
+  <div id="tab-s234" class="tab-content">
+    <div class="card">
+      <div class="card-title">§ 234 AO – Stundungszinsen</div>
+      <div class="card-sub">Zinsen für die Dauer einer bewilligten Stundung fälliger Steuern</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Gestundeter Betrag (€)</label>
+          <input type="number" id="s234-betrag" placeholder="z. B. 10 000" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Stundungsbeginn</label>
+          <input type="date" id="s234-beginn">
+        </div>
+        <div class="form-group">
+          <label>Stundungsende / Zahlung</label>
+          <input type="date" id="s234-ende">
+        </div>
+      </div>
+      <button class="btn" onclick="calc234()">Berechnen</button>
+      <div id="s234-result"></div>
+      <div class="info-box">
+        Stundungszinsen laufen ab Fälligkeit der gestundeten Steuer bis zur Zahlung oder dem Ende der Stundungsfrist.
+        Nur volle Monate werden berücksichtigt (§ 238 Abs. 1 S. 2 AO).
+        Zinssatz: 0,50 %/Monat bis 31.12.2018 · 0,15 %/Monat ab 01.01.2019.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ §235 ═══════════════════════════════════════════════════════ -->
+  <div id="tab-s235" class="tab-content">
+    <div class="card">
+      <div class="card-title">§ 235 AO – Hinterziehungszinsen</div>
+      <div class="card-sub">Zinsen auf hinterzogene Steuerbeträge (zusätzlich zu § 233a AO)</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Hinterzogener Betrag (€)</label>
+          <input type="number" id="s235-betrag" placeholder="z. B. 8 000" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Zinsbeginn</label>
+          <input type="date" id="s235-beginn">
+          <span class="hint">Fälligkeitstag der hinterzogenen Steuer</span>
+        </div>
+        <div class="form-group">
+          <label>Zinsende</label>
+          <input type="date" id="s235-ende">
+          <span class="hint">Tag der Zahlung / Festsetzung</span>
+        </div>
+      </div>
+      <button class="btn" onclick="calc235()">Berechnen</button>
+      <div id="s235-result"></div>
+      <div class="info-box">
+        Der Zinslauf beginnt mit dem Fälligkeitstag der verkürzten Steuer und endet mit der Zahlung.
+        Bereits festgesetzte Nachzahlungszinsen nach § 233a AO werden angerechnet (§ 235 Abs. 4 AO).
+        Zinssatz: 0,50 %/Monat bis 31.12.2018 · 0,15 %/Monat ab 01.01.2019.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ §236 ═══════════════════════════════════════════════════════ -->
+  <div id="tab-s236" class="tab-content">
+    <div class="card">
+      <div class="card-title">§ 236 AO – Prozesszinsen auf Erstattungsbeträge</div>
+      <div class="card-sub">Zinsen bei erfolgreichem Einspruch oder Klage gegen einen Steuerbescheid</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Erstattungsbetrag (€)</label>
+          <input type="number" id="s236-betrag" placeholder="z. B. 3 000" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Zinsbeginn</label>
+          <input type="date" id="s236-beginn">
+          <span class="hint">Tag der Zahlung durch den Stpfl.</span>
+        </div>
+        <div class="form-group">
+          <label>Zinsende</label>
+          <input type="date" id="s236-ende">
+          <span class="hint">Tag der Erstattung / Aufrechnung</span>
+        </div>
+      </div>
+      <button class="btn" onclick="calc236()">Berechnen</button>
+      <div id="s236-result"></div>
+      <div class="info-box">
+        Prozesszinsen entstehen zugunsten des Steuerpflichtigen, wenn im Rechtsbehelfsverfahren ein Erstattungsanspruch festgestellt wird.
+        Zinslauf: vom Tag der Zahlung bis zum Tag der Erstattung oder Aufrechnung (§ 236 Abs. 1 AO).
+        Zinssatz: 0,50 %/Monat bis 31.12.2018 · 0,15 %/Monat ab 01.01.2019.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ §237 ═══════════════════════════════════════════════════════ -->
+  <div id="tab-s237" class="tab-content">
+    <div class="card">
+      <div class="card-title">§ 237 AO – Zinsen bei Aussetzung der Vollziehung (AdV)</div>
+      <div class="card-sub">Zinsen auf ausgesetzte Beträge, wenn der Rechtsbehelf keinen Erfolg hatte</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Ausgesetzter Betrag (€)</label>
+          <input type="number" id="s237-betrag" placeholder="z. B. 6 000" step="0.01">
+        </div>
+        <div class="form-group">
+          <label>Beginn der AdV</label>
+          <input type="date" id="s237-beginn">
+        </div>
+        <div class="form-group">
+          <label>Ende der AdV</label>
+          <input type="date" id="s237-ende">
+          <span class="hint">Bestandskraft / Zahlung / Aufhebung</span>
+        </div>
+      </div>
+      <button class="btn" onclick="calc237()">Berechnen</button>
+      <div id="s237-result"></div>
+      <div class="info-box">
+        Aussetzungszinsen werden festgesetzt, wenn die AdV zu Unrecht gewährt wurde (erfolgloser Rechtsbehelf).
+        Zinslauf: Beginn der AdV bis Bestandskraft der Steuerfestsetzung oder Zahlung.
+        Zinssatz: 0,50 %/Monat bis 31.12.2018 · 0,15 %/Monat ab 01.01.2019 (§ 237 i. V. m. § 238 AO).
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ §152 ═══════════════════════════════════════════════════════ -->
+  <div id="tab-s152" class="tab-content">
+    <div class="card">
+      <div class="card-title">§ 152 AO – Verspätungszuschlag</div>
+      <div class="card-sub">Zuschlag wegen verspäteter Abgabe der Steuererklärung</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Festgesetzte Steuer (€)</label>
+          <input type="number" id="s152-steuer" placeholder="z. B. 12 000" step="0.01">
+          <span class="hint">Steuer laut Bescheid (ohne Zinsen)</span>
+        </div>
+        <div class="form-group">
+          <label>Abgabefrist (Stichtag)</label>
+          <input type="date" id="s152-frist">
+          <span class="hint">Letzter Tag für fristgerechte Abgabe</span>
+        </div>
+        <div class="form-group">
+          <label>Tatsächliche Abgabe</label>
+          <input type="date" id="s152-abgabe">
+        </div>
+        <div class="form-group">
+          <label>Art der Berechnung</label>
+          <div class="radio-group">
+            <label class="radio-opt">
+              <input type="radio" name="s152mode" value="auto" checked>
+              Automatisch (Abs. 2)
+            </label>
+            <label class="radio-opt">
+              <input type="radio" name="s152mode" value="erw">
+              Ermessen (Abs. 1)
+            </label>
+          </div>
+        </div>
+      </div>
+      <div id="s152-erw-row" style="display:none">
+        <div class="form-grid">
+          <div class="form-group">
+            <label>Zuschlagsatz (%) – max. 10 %</label>
+            <input type="number" id="s152-satz" placeholder="z. B. 5" min="0" max="10" step="0.1">
+            <span class="hint">Im Ermessen des Finanzamts; max. 10 % der Steuer</span>
+          </div>
+        </div>
+      </div>
+      <button class="btn" onclick="calc152()">Berechnen</button>
+      <div id="s152-result"></div>
+      <div class="info-box">
+        <strong>Automatischer VZ (§ 152 Abs. 2 AO):</strong>
+        Greift zwingend, wenn Pflichtveranlagte die Erklärung mehr als 14 Monate nach Ablauf des VZ einreichen.
+        Satz: 0,25 % der Steuerschuld je angefangenen Monat, mind. 25 €/Monat, max. 25.000 €.<br>
+        <strong>Ermessensabhängig (§ 152 Abs. 1 AO):</strong>
+        Bis zu 10 % der festgesetzten Steuer, max. 25.000 €.
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ §240 ═══════════════════════════════════════════════════════ -->
+  <div id="tab-s240" class="tab-content">
+    <div class="card">
+      <div class="card-title">§ 240 AO – Säumniszuschlag</div>
+      <div class="card-sub">Zuschlag bei nicht fristgerechter Zahlung fälliger Steuern und steuerlicher Nebenleistungen</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Fälliger Steuerbetrag (€)</label>
+          <input type="number" id="s240-betrag" placeholder="z. B. 4 500" step="0.01">
+          <span class="hint">Wird auf volle 50 € abgerundet</span>
+        </div>
+        <div class="form-group">
+          <label>Fälligkeitstag</label>
+          <input type="date" id="s240-faellig">
+        </div>
+        <div class="form-group">
+          <label>Zahltag</label>
+          <input type="date" id="s240-zahlung">
+        </div>
+      </div>
+      <button class="btn" onclick="calc240()">Berechnen</button>
+      <div id="s240-result"></div>
+      <div class="info-box">
+        Säumniszuschläge entstehen kraft Gesetzes ab dem Tag nach dem Fälligkeitstag (§ 240 Abs. 1 S. 1 AO).
+        Bemessungsgrundlage: Steuerbetrag abgerundet auf den nächsten vollen 50-€-Betrag.
+        Satz: 1 % je angefangenen Monat. In der Praxis wird häufig eine Kulanzfrist von bis zu 5 Werktagen toleriert – gesetzliche Grundlage besteht hierfür nicht.
+      </div>
+    </div>
+  </div>
+</div><!-- /container -->
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════
+   CONSTANTS
+═══════════════════════════════════════════════════════════════════ */
+const RATE_CHANGE = new Date(2019, 0, 1); // 01.01.2019
+const RATE_OLD    = 0.005;  // 0,50 % / Monat  (bis 31.12.2018)
+const RATE_NEW    = 0.0015; // 0,15 % / Monat  (ab 01.01.2019)
+
+/* ═══════════════════════════════════════════════════════════════════
+   TABS
+═══════════════════════════════════════════════════════════════════ */
+const TABS = [
+  { id: 's233a', label: '§ 233a – Nachzahlung / Erstattung' },
+  { id: 's234',  label: '§ 234 – Stundung' },
+  { id: 's235',  label: '§ 235 – Hinterziehung' },
+  { id: 's236',  label: '§ 236 – Prozesszinsen' },
+  { id: 's237',  label: '§ 237 – Aussetzung (AdV)' },
+  { id: 's152',  label: '§ 152 – Verspätungszuschlag' },
+  { id: 's240',  label: '§ 240 – Säumniszuschlag' },
+];
+
+(function buildTabs() {
+  const bar = document.getElementById('tabbar');
+  TABS.forEach((t, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'tab-btn' + (i === 0 ? ' active' : '');
+    btn.textContent = t.label;
+    btn.dataset.id  = t.id;
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('tab-' + t.id).classList.add('active');
+    });
+    bar.appendChild(btn);
+  });
+  document.getElementById('tab-' + TABS[0].id).classList.add('active');
+})();
+
+/* ═══════════════════════════════════════════════════════════════════
+   FORMAT HELPERS
+═══════════════════════════════════════════════════════════════════ */
+function fmtEuro(n) {
+  return n.toLocaleString('de-DE', { style: 'currency', currency: 'EUR', minimumFractionDigits: 2 });
+}
+function fmtDate(d) {
+  return d.toLocaleDateString('de-DE', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+function parseDate(s) {
+  if (!s) return null;
+  const [y, m, d] = s.split('-').map(Number);
+  return new Date(y, m - 1, d);
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CORE: volle Monate zwischen start (inkl.) und end (exkl.)
+   §238 Abs. 1 S. 2 AO: Zinsberechnungszeitraum = volle Monate
+═══════════════════════════════════════════════════════════════════ */
+function fullMonths(start, end) {
+  if (!start || !end || end <= start) return 0;
+  let count = 0;
+  let cur   = new Date(start);
+  while (true) {
+    const next = new Date(cur.getFullYear(), cur.getMonth() + 1, cur.getDate());
+    if (next > end) break;
+    count++;
+    cur = next;
+  }
+  return count;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CORE: AO-Zinsen mit Tarifwechsel 01.01.2019
+═══════════════════════════════════════════════════════════════════ */
+function calcAOZinsen(betrag, start, end) {
+  const amt = Math.abs(betrag);
+  if (!start || !end || end <= start || !amt) return null;
+
+  const details = [];
+  let total = 0;
+
+  if (start < RATE_CHANGE && end > RATE_CHANGE) {
+    const m1 = fullMonths(start, RATE_CHANGE);
+    const m2 = fullMonths(RATE_CHANGE, end);
+    if (m1 > 0) {
+      const z = amt * RATE_OLD * m1;
+      details.push({ von: fmtDate(start), bis: '31.12.2018', monate: m1, satz: '0,50 %/Monat', zinsen: z });
+      total += z;
+    }
+    if (m2 > 0) {
+      const z = amt * RATE_NEW * m2;
+      details.push({ von: '01.01.2019', bis: fmtDate(end), monate: m2, satz: '0,15 %/Monat', zinsen: z });
+      total += z;
+    }
+  } else {
+    const rate  = start >= RATE_CHANGE ? RATE_NEW : RATE_OLD;
+    const label = start >= RATE_CHANGE ? '0,15 %/Monat' : '0,50 %/Monat';
+    const m     = fullMonths(start, end);
+    if (m > 0) {
+      const z = amt * rate * m;
+      details.push({ von: fmtDate(start), bis: fmtDate(end), monate: m, satz: label, zinsen: z });
+      total = z;
+    }
+  }
+  return { total, details };
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   RENDER: Zinsen-Ergebnis
+═══════════════════════════════════════════════════════════════════ */
+function renderZinsen(targetId, betrag, start, end, isErstattung) {
+  const el  = document.getElementById(targetId);
+  const res = calcAOZinsen(betrag, start, end);
+  if (!res || res.details.length === 0) {
+    el.innerHTML = '<div class="alert alert-warn">⚠ Es konnten keine vollständigen Zinsmonate ermittelt werden. Bitte Zeitraum und Betrag prüfen.</div>';
+    return;
+  }
+
+  const cls   = isErstattung ? 'is-ez' : 'is-nz';
+  const label = isErstattung ? 'Erstattungszinsen (Finanzamt → Steuerpflichtiger)' : 'Nachzahlungszinsen (Steuerpflichtiger → Finanzamt)';
+
+  const rows = res.details.map(d => `
+    <tr>
+      <td>${d.von} – ${d.bis}</td>
+      <td class="r">${d.monate}</td>
+      <td class="r">${d.satz}</td>
+      <td class="r">${fmtEuro(Math.abs(betrag))}</td>
+      <td class="r">${fmtEuro(d.zinsen)}</td>
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div class="result-box ${cls}">
+      <div class="result-main ${cls}">${fmtEuro(res.total)}</div>
+      <div class="result-label">${label}</div>
+      <table class="detail-table">
+        <thead><tr>
+          <th>Zeitraum</th>
+          <th class="r">Monate</th>
+          <th class="r">Satz</th>
+          <th class="r">Betrag</th>
+          <th class="r">Zinsen</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr>
+          <td colspan="4">Zinsen gesamt</td>
+          <td class="r">${fmtEuro(res.total)}</td>
+        </tr></tfoot>
+      </table>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   §233a – Karenzzeit-Helfer
+═══════════════════════════════════════════════════════════════════ */
+(function initVZSelect() {
+  const sel  = document.getElementById('s233a-vz');
+  const year = new Date().getFullYear();
+  for (let y = year; y >= 2000; y--) {
+    const o = document.createElement('option');
+    o.value = y; o.textContent = y;
+    sel.appendChild(o);
+  }
+})();
+
+function s233aKarenz() {
+  const vz   = parseInt(document.getElementById('s233a-vz').value);
+  const hint = document.getElementById('s233a-karenz-hint');
+  if (!vz) { hint.textContent = 'Aus VZ berechnet oder manuell'; return; }
+  // Karenzzeit = 15 Monate nach Ablauf des VZ → endet 31.03. des übernächsten Jahres
+  const karenzEnde   = new Date(vz + 2, 2, 31); // 31.03.VZ+2
+  const zinsbeginnDt = new Date(vz + 2, 3, 1);  // 01.04.VZ+2
+  document.getElementById('s233a-beginn').value = zinsbeginnDt.toISOString().slice(0, 10);
+  hint.textContent = `Karenzzeit endet: ${fmtDate(karenzEnde)} → Zinslauf ab ${fmtDate(zinsbeginnDt)}`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   CALCULATORS
+═══════════════════════════════════════════════════════════════════ */
+function validate(fields, resultId) {
+  if (fields.some(f => f == null || (typeof f === 'number' && isNaN(f)))) {
+    document.getElementById(resultId).innerHTML =
+      '<div class="alert alert-warn">⚠ Bitte alle Felder ausfüllen.</div>';
+    return false;
+  }
+  return true;
+}
+
+function calc233a() {
+  const betrag = parseFloat(document.getElementById('s233a-betrag').value);
+  const start  = parseDate(document.getElementById('s233a-beginn').value);
+  const end    = parseDate(document.getElementById('s233a-ende').value);
+  if (!validate([betrag, start, end], 's233a-result')) return;
+  renderZinsen('s233a-result', betrag, start, end, betrag < 0);
+}
+
+function calc234() {
+  const betrag = parseFloat(document.getElementById('s234-betrag').value);
+  const start  = parseDate(document.getElementById('s234-beginn').value);
+  const end    = parseDate(document.getElementById('s234-ende').value);
+  if (!validate([betrag, start, end], 's234-result')) return;
+  renderZinsen('s234-result', betrag, start, end, false);
+}
+
+function calc235() {
+  const betrag = parseFloat(document.getElementById('s235-betrag').value);
+  const start  = parseDate(document.getElementById('s235-beginn').value);
+  const end    = parseDate(document.getElementById('s235-ende').value);
+  if (!validate([betrag, start, end], 's235-result')) return;
+  renderZinsen('s235-result', betrag, start, end, false);
+}
+
+function calc236() {
+  const betrag = parseFloat(document.getElementById('s236-betrag').value);
+  const start  = parseDate(document.getElementById('s236-beginn').value);
+  const end    = parseDate(document.getElementById('s236-ende').value);
+  if (!validate([betrag, start, end], 's236-result')) return;
+  renderZinsen('s236-result', betrag, start, end, true);
+}
+
+function calc237() {
+  const betrag = parseFloat(document.getElementById('s237-betrag').value);
+  const start  = parseDate(document.getElementById('s237-beginn').value);
+  const end    = parseDate(document.getElementById('s237-ende').value);
+  if (!validate([betrag, start, end], 's237-result')) return;
+  renderZinsen('s237-result', betrag, start, end, false);
+}
+
+function calc152() {
+  const steuer = parseFloat(document.getElementById('s152-steuer').value);
+  const frist  = parseDate(document.getElementById('s152-frist').value);
+  const abgabe = parseDate(document.getElementById('s152-abgabe').value);
+  const el     = document.getElementById('s152-result');
+  if (!validate([steuer, frist, abgabe], 's152-result')) return;
+
+  if (abgabe <= frist) {
+    el.innerHTML = `<div class="result-box"><div class="result-main is-neutral">0,00 €</div>
+      <div class="result-label">Steuererklärung wurde fristgerecht abgegeben – kein Verspätungszuschlag.</div></div>`;
+    return;
+  }
+
+  // Angefangene Monate ab dem Tag nach der Frist
+  const afterFrist = new Date(frist.getFullYear(), frist.getMonth(), frist.getDate() + 1);
+  let months = 0;
+  let cur    = new Date(afterFrist);
+  while (cur <= abgabe) {
+    months++;
+    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, cur.getDate());
+  }
+
+  const mode = document.querySelector('input[name="s152mode"]:checked').value;
+  let vzg, details;
+
+  if (mode === 'auto') {
+    const perMonth  = Math.max(steuer * 0.0025, 25);
+    const raw       = perMonth * months;
+    vzg             = Math.min(raw, 25000);
+    details = `${months} angefangene Monate × ${fmtEuro(perMonth)}/Monat`
+            + ` (0,25 % von ${fmtEuro(steuer)}, mind. 25 €/Monat)`
+            + (raw > 25000 ? ' → gekappt auf max. 25.000 €' : '');
+  } else {
+    const satz = parseFloat(document.getElementById('s152-satz').value) / 100;
+    if (isNaN(satz) || satz <= 0) {
+      el.innerHTML = '<div class="alert alert-warn">⚠ Bitte einen Zuschlagsatz eingeben.</div>';
+      return;
+    }
+    const capped = Math.min(satz, 0.10);
+    const raw    = steuer * capped;
+    vzg          = Math.min(raw, 25000);
+    details = `${(capped * 100).toLocaleString('de-DE')} % von ${fmtEuro(steuer)} = ${fmtEuro(raw)}`
+            + (raw > 25000 ? ' → gekappt auf max. 25.000 €' : '')
+            + (satz > 0.10 ? ' (Satz auf 10 % begrenzt)' : '');
+  }
+
+  el.innerHTML = `
+    <div class="result-box is-nz">
+      <div class="result-main is-nz">${fmtEuro(vzg)}</div>
+      <div class="result-label">Verspätungszuschlag</div>
+      <table class="detail-table">
+        <tbody>
+          <tr><td>Abgabefrist</td><td class="r">${fmtDate(frist)}</td></tr>
+          <tr><td>Tatsächliche Abgabe</td><td class="r">${fmtDate(abgabe)}</td></tr>
+          <tr><td>Angefangene Monate der Verspätung</td><td class="r">${months}</td></tr>
+          <tr><td>Berechnung</td><td class="r">${details}</td></tr>
+        </tbody>
+        <tfoot><tr><td>Verspätungszuschlag</td><td class="r">${fmtEuro(vzg)}</td></tr></tfoot>
+      </table>
+    </div>`;
+}
+
+function calc240() {
+  const betrag  = parseFloat(document.getElementById('s240-betrag').value);
+  const faellig = parseDate(document.getElementById('s240-faellig').value);
+  const zahlung = parseDate(document.getElementById('s240-zahlung').value);
+  const el      = document.getElementById('s240-result');
+  if (!validate([betrag, faellig, zahlung], 's240-result')) return;
+
+  if (zahlung <= faellig) {
+    el.innerHTML = `<div class="result-box"><div class="result-main is-neutral">0,00 €</div>
+      <div class="result-label">Steuer wurde am oder vor dem Fälligkeitstag gezahlt – kein Säumniszuschlag.</div></div>`;
+    return;
+  }
+
+  // Säumniszuschlag: 1 % je angefangenen Monat ab dem Tag nach dem Fälligkeitstag
+  const saumnisStart = new Date(faellig.getFullYear(), faellig.getMonth(), faellig.getDate() + 1);
+  let months = 0;
+  let cur    = new Date(saumnisStart);
+  while (cur <= zahlung) {
+    months++;
+    cur = new Date(cur.getFullYear(), cur.getMonth() + 1, cur.getDate());
+  }
+
+  const basis = Math.floor(betrag / 50) * 50;
+  const szg   = basis * 0.01 * months;
+
+  el.innerHTML = `
+    <div class="result-box is-nz">
+      <div class="result-main is-nz">${fmtEuro(szg)}</div>
+      <div class="result-label">Säumniszuschlag</div>
+      <table class="detail-table">
+        <tbody>
+          <tr><td>Fälligkeitstag</td><td class="r">${fmtDate(faellig)}</td></tr>
+          <tr><td>Säumnisbeginn (Tag danach)</td><td class="r">${fmtDate(saumnisStart)}</td></tr>
+          <tr><td>Zahlung</td><td class="r">${fmtDate(zahlung)}</td></tr>
+          <tr><td>Steuerbetrag (brutto)</td><td class="r">${fmtEuro(betrag)}</td></tr>
+          <tr><td>Bemessungsgrundlage (auf 50 € abgerundet)</td><td class="r">${fmtEuro(basis)}</td></tr>
+          <tr><td>Angefangene Monate</td><td class="r">${months}</td></tr>
+          <tr><td>Satz</td><td class="r">1 % je angefangenen Monat</td></tr>
+        </tbody>
+        <tfoot><tr><td>Säumniszuschlag gesamt</td><td class="r">${fmtEuro(szg)}</td></tr></tfoot>
+      </table>
+    </div>`;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   §152 – Ermessen-Toggle
+═══════════════════════════════════════════════════════════════════ */
+document.querySelectorAll('input[name="s152mode"]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.getElementById('s152-erw-row').style.display =
+      r.value === 'erw' ? 'block' : 'none';
+  });
+});
+</script>
+</body>
+</html>
