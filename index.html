@@ -398,6 +398,20 @@
           <input type="date" id="s152-abgabe">
         </div>
         <div class="form-group">
+          <label>Erklärungsart</label>
+          <div class="radio-group">
+            <label class="radio-opt">
+              <input type="radio" name="s152art" value="erklaerung" checked>
+              Steuererklärung
+            </label>
+            <label class="radio-opt">
+              <input type="radio" name="s152art" value="anmeldung">
+              Steueranmeldung
+            </label>
+          </div>
+          <span class="hint" id="s152-art-hint">Mindest-VZ: 25 €/Monat</span>
+        </div>
+        <div class="form-group">
           <label>Art der Berechnung</label>
           <div class="radio-group">
             <label class="radio-opt">
@@ -424,8 +438,8 @@
       <div id="s152-result"></div>
       <div class="info-box">
         <strong>Automatischer VZ (§ 152 Abs. 2 AO):</strong>
-        Greift zwingend, wenn Pflichtveranlagte die Erklärung mehr als 14 Monate nach Ablauf des VZ einreichen.
-        Satz: 0,25 % der Steuerschuld je angefangenen Monat, mind. 25 €/Monat, max. 25.000 €.<br>
+        Satz: 0,25 % der Steuerschuld je angefangenen Monat, max. 25.000 €.<br>
+        Mindestbetrag: <strong>25 €/Monat</strong> bei Steuererklärungen · <strong>10 €/Monat</strong> bei Steueranmeldungen.<br>
         <strong>Ermessensabhängig (§ 152 Abs. 1 AO):</strong>
         Bis zu 10 % der festgesetzten Steuer, max. 25.000 €.
       </div>
@@ -715,12 +729,16 @@ function calc152() {
   const mode = document.querySelector('input[name="s152mode"]:checked').value;
   let vzg, details;
 
+  const art        = document.querySelector('input[name="s152art"]:checked').value;
+  const minPerMonth = art === 'anmeldung' ? 10 : 25;
+  const artLabel    = art === 'anmeldung' ? 'Steueranmeldung' : 'Steuererklärung';
+
   if (mode === 'auto') {
-    const perMonth  = Math.max(steuer * 0.0025, 25);
+    const perMonth  = Math.max(steuer * 0.0025, minPerMonth);
     const raw       = perMonth * months;
     vzg             = Math.min(raw, 25000);
     details = `${months} angefangene Monate × ${fmtEuro(perMonth)}/Monat`
-            + ` (0,25 % von ${fmtEuro(steuer)}, mind. 25 €/Monat)`
+            + ` (0,25 % von ${fmtEuro(steuer)}, mind. ${fmtEuro(minPerMonth)}/Monat · ${artLabel})`
             + (raw > 25000 ? ' → gekappt auf max. 25.000 €' : '');
   } else {
     const satz = parseFloat(document.getElementById('s152-satz').value) / 100;
@@ -797,12 +815,18 @@ function calc240() {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
-   §152 – Ermessen-Toggle
+   §152 – Ermessen-Toggle & Erklärungsart-Hint
 ═══════════════════════════════════════════════════════════════════ */
 document.querySelectorAll('input[name="s152mode"]').forEach(r => {
   r.addEventListener('change', () => {
     document.getElementById('s152-erw-row').style.display =
       r.value === 'erw' ? 'block' : 'none';
+  });
+});
+document.querySelectorAll('input[name="s152art"]').forEach(r => {
+  r.addEventListener('change', () => {
+    document.getElementById('s152-art-hint').textContent =
+      r.value === 'anmeldung' ? 'Mindest-VZ: 10 €/Monat' : 'Mindest-VZ: 25 €/Monat';
   });
 });
 </script>
