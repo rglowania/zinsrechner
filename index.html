@@ -527,13 +527,8 @@ footer{
       <div id="s152-result"></div>
       <div class="info-box">
         <strong>Automatischer VZ (§ 152 Abs. 2 AO):</strong>
-<<<<<<< HEAD
-        Greift zwingend, wenn Pflichtveranlagte die Erklärung mehr als 14 Monate nach Ablauf des VZ einreichen.
-        Satz: 0,25 % der Steuerschuld je angefangenen Monat, mind. 25 €/Monat, max. 25.000 €.<br><br>
-=======
         Satz: 0,25 % der Steuerschuld je angefangenen Monat, max. 25.000 €.<br>
         Mindestbetrag: <strong>25 €/Monat</strong> bei Steuererklärungen · <strong>10 €/Monat</strong> bei Steueranmeldungen.<br><br>
->>>>>>> claude/update-bitte-gdesign-WHQWj
         <strong>Ermessensabhängig (§ 152 Abs. 1 AO):</strong>
         Bis zu 10 % der festgesetzten Steuer, max. 25.000 €.
       </div>
@@ -839,11 +834,7 @@ function calc152() {
   const artLabel    = art === 'anmeldung' ? 'Steueranmeldung' : 'Steuererklärung';
 
   if (mode === 'auto') {
-<<<<<<< HEAD
-    const perMonth = Math.max(steuer * 0.0025, 25);
-=======
     const perMonth = Math.max(steuer * 0.0025, minPerMonth);
->>>>>>> claude/update-bitte-gdesign-WHQWj
     const raw = perMonth * months;
     vzg = Math.min(raw, 25000);
     details = `${months} angefangene Monate × ${fmtEuro(perMonth)}/Monat`
@@ -924,11 +915,7 @@ function calc240() {
 }
 
 /* ─────────────────────────────────────────────────────────────
-<<<<<<< HEAD
-   §152 – Ermessen-Toggle
-=======
    §152 – Ermessen-Toggle & Erklärungsart-Hint
->>>>>>> claude/update-bitte-gdesign-WHQWj
 ───────────────────────────────────────────────────────────── */
 document.querySelectorAll('input[name="s152mode"]').forEach(r => {
   r.addEventListener('change', () => {
